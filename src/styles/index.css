@@ -1,0 +1,164 @@
+.flex {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.flex-column {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.flex-row {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+}
+
+.flex-wrap {
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.align-center {
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+.justify-center {
+  justify-content: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+}
+
+.justify-between {
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+}
+.justify-around {
+  -ms-flex-pack: distribute;
+  justify-content: space-around;
+}
+
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.avatar img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name {
+  margin-top: 10px;
+}
+
+.name h1 {
+  font-size: 3vw;
+  margin: 0;
+}
+
+.find-me {
+  column-gap: 1rem;
+}
+.find-me > p {
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+}
+
+.find-me ul {
+  flex: 0 1 auto;
+  column-gap: 1rem;
+}
+
+.find-me ul a {
+  display: inline-block;
+  padding: 0.5rem;
+}
+
+.find-me ul a svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.recent-articles {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.recent-articles h2 {
+  text-align: center;
+}
+
+.recent-articles li {
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.recent-articles .date {
+  display: block;
+  font-size: 14px;
+}
+
+.recent-articles a {
+  color: #98fb98;
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+}
+
+@media screen and (max-width: 600px) {
+  .recent-articles .date {
+    font-size: 12px;
+  }
+
+  .recent-articles a {
+    font-size: 16px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .avatar img {
+    width: 100px;
+    height: 100px;
+  }
+
+  .name h1 {
+    font-size: 6vw;
+  }
+
+  .find-me ul a svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
