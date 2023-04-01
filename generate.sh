@@ -43,8 +43,6 @@ function generate_blog_index() {
     local articles=$1
     local index_html_file="$CURRENT_DIR/src/index.html"
  
-    # Delete content inside this two comments
-
     # Insert the updated article list
     local html=''
     while IFS= read -r  file; do
@@ -54,18 +52,14 @@ function generate_blog_index() {
             year=$(echo "$date" | $GREP_COMMAND -o '[0-9]\{4\}')
             path=$(echo "/blog/$year/$(basename "$file")" | sed 's/\.md$/.html/')
 
-            html+="<li><a href=\"$path\">$title</a><span class=\"date\">$date</span></li>\n"
+            html+="<li><a href=\"$path\">$title</a><span class=\"date\">$date</span></li>"
         fi 
     done <<< "$articles"
-
-    ed "$index_html_file"<<EOF
-    /^\s*<!--\s*START\s*-->\s*$
-    +,/^\s*<!--\s*END\s*-->\s*$/-1d
-    -r !sed -n '/^\s*<!--\s*START\s*-->\s*$/,/^\s*<!--\s*END\s*-->\s*$/p' $html|grep -v '^#'
-    w
-    q
-EOF
-
+    
+    sed -i '' -e "/<!-- START -->/,/<!-- END -->/c\\
+    <!-- START -->\\
+    $html\\
+    <!-- END -->" "$index_html_file"
 }
 
 function extract_frontmatter_property() {
@@ -80,5 +74,5 @@ function extract_frontmatter_property() {
     fi 
 }
 
-#generate_html_articles "$MARKDOWN_FILES"
+generate_html_articles "$MARKDOWN_FILES"
 generate_blog_index "$MARKDOWN_FILES"
