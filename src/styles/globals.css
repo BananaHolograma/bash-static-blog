@@ -10,7 +10,7 @@ body {
   font-feature-settings: normal;
   tab-size: 4;
   text-rendering: optimizeLegibility;
-  color: rgb(156 163 175);
+  color: #ccc;
 }
 
 main {

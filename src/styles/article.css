@@ -1,3 +1,66 @@
+.text-center {
+  text-align: center;
+}
+
+.terminal-link:active {
+  background-color: #eee;
+  color: #222;
+}
+
+.terminal {
+  background-color: #282c34;
+  color: #abb2bf;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 5px;
+  display: inline-block;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.terminal pre {
+  margin: 0;
+  padding: 0;
+}
+
+.terminal .prompt {
+  color: #61afef;
+  display: inline-block;
+  font-weight: bold;
+  margin-right: 10px;
+  user-select: none;
+}
+
+.terminal .command {
+  display: inline-block;
+  color: #c678dd;
+}
+
+.terminal .output {
+  display: block;
+}
+
+.terminal .output:before {
+  content: "serosapiens@archlinux " attr(data-prompt);
+  color: #ffffcc;
+  display: inline-block;
+  margin-right: 10px;
+  user-select: none;
+}
+
+.terminal .output:after {
+  content: "_";
+  display: inline-block;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 blockquote {
   margin: 1em 0 1em 1.7em;
   padding-left: 1em;
