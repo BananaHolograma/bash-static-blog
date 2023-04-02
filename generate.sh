@@ -49,10 +49,11 @@ function generate_blog_index() {
         if [ -f "$file" ]; then 
             title=$(extract_frontmatter_property "$file" "title")
             date=$(extract_frontmatter_property "$file" "date")
+            human_date=$(extract_frontmatter_property "$file" "human_date")
             year=$(echo "$date" | $GREP_COMMAND -o '[0-9]\{4\}')
             path=$(echo "/blog/$year/$(basename "$file")" | sed 's/\.md$/.html/')
 
-            html+="<li><a href=\"$path\">$title</a><span class=\"date\">$date</span></li>"
+            html+="<li><a href=\"$path\">$title</a><span class=\"date\">$human_date</span></li>"
         fi 
     done <<< "$articles"
     

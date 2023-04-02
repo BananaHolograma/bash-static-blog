@@ -1,7 +1,7 @@
 ---
 author: s3r0s4pi3ns
 date: 2023-03-01
-datetime: 2023-03-01T00:00:00.000Z
+human_date: 03 Marzo, 2023
 description: Si tenías la curiosidad de como se crean las herramientas de bash que te permiten pasar como parámetro opciones específicas este es tu lugar
 title: Definir argumentos en un script de bash
 path: blog/definir-argumentos-en-un-script-de-bash
