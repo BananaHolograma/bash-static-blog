@@ -9,7 +9,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: "nginx-server"
+    container_name: "nginx-blog-server"
     ports:
       - 8888:80
     restart: unless-stopped
