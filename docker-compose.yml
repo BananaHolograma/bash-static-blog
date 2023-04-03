@@ -1,0 +1,17 @@
+version: "3.9"
+
+networks:
+  server-network:
+    driver: bridge
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: "nginx-server"
+    ports:
+      - 8888:80
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html

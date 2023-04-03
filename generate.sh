@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# REMINDER OUTPUT STYLES FOR SYNTAX HIGHLIGHT pandoc --highlight-style=zenburn ./content/2023/definir-argumentos-script-de-bash.md -s -o readme2.html
+
 GREP_COMMAND='grep' # GNU Linux grep command by default
 
 function is_macOs() {
@@ -28,7 +30,7 @@ function generate_html_from_markdown() {
     mkdir -p "$(dirname "$output_path")"
     pandoc --read=markdown --table-of-contents --toc-depth=2 --preserve-tabs --standalone --template="$templates_path"/article.html --listings "$markdown_path" --highlight-style=espresso -o "$output_path"
 
-    echo -e "Generated article from $markdown_path"
+    echo -e "Generated html from article $(dirname "$markdown_path")"
 }
 
 function generate_html_articles() {

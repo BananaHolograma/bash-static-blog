@@ -4,9 +4,10 @@ Quizas si, voy a enumerar un par de features minimalistas. Digo minimalista porq
 
 - Crear un directorio base de carpetas donde se movera el contenido al directorio source
 - Multilenguaje (carpetas con el locale tipo es,en...)
-- Metadatos en formato .yml
+- Metadatos en formato .yml para la configuracion basica del blog
 - Metadatos para categorizar articulos
 - Makefile para abstraer las operaciones en un lenguaje humano
 - Template minimalista con html y css, nada de frameworks
+- Entorno docker con Nginx y Pandoc separados
 
 Requerimentos: pandoc yq(parseo yaml como jq para json) bash v4+
