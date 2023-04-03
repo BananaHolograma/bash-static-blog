@@ -53,7 +53,7 @@ function generate_blog_index() {
             date=$(extract_frontmatter_property "$file" "date")
             human_date=$(extract_frontmatter_property "$file" "human_date")
             year=$(echo "$date" | $GREP_COMMAND -o '[0-9]\{4\}')
-            path=$(echo "/blog/$year/$(basename "$file")" | sed 's/\.md$/.html/')
+            path=$(echo "/blog/$year/$(basename "$file")" | sed 's/\.md$//')
 
             html+="<li><a href=\"$path\">$title</a><span class=\"date\">$human_date</span></li>"
         fi 
