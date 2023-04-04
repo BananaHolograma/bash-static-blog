@@ -11,6 +11,12 @@ path: blog/2023/construyendo-un-blog-estatico-con-bash
 
 Si te importa un carajo como he construido esta basura puedes ir directamente al código en el repositorio [https://github.com/s3r0s4pi3ns/bash-static-blog](https://github.com/s3r0s4pi3ns/bash-static-blog) y ahorrarte toda esta fumada.
 
+`Se requiere que tengas conocimientos previos de:`
+
+- **_Linux_**
+- **_Bash scripting_**
+- **_Docker & Nginx (opcional)_**
+
 # La idea inicial
 
 Es 2023, mientras escribo este artículo semidesnudo, en el mundo existen multitud de herramientas para construir sitios estáticos como [Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/) o [Astro](https://astro.build/) que hacen un trabajo excelente.

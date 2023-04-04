@@ -17,7 +17,7 @@ if is_macOs; then
 fi
 
 CURRENT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
-MARKDOWN_FILES=$(find "$CURRENT_DIR/content" -type f -iname '*.md' -print | xargs -0)
+MARKDOWN_FILES=$(find "$CURRENT_DIR/content" -type f -iname '*.md' -print | xargs -0 | xargs ls -tr)
 
 function generate_html_from_markdown() {
     local markdown_path=$1
@@ -30,7 +30,7 @@ function generate_html_from_markdown() {
     mkdir -p "$(dirname "$output_path")"
     pandoc --read=markdown --table-of-contents --toc-depth=2 --preserve-tabs --standalone --template="$templates_path"/article.html --listings "$markdown_path" --highlight-style=zenburn -o "$output_path"
 
-    echo -e "Generated html from article $(dirname "$markdown_path")"
+    echo -e "Generated html from article $(basename "$markdown_path")"
 }
 
 function generate_html_articles() {

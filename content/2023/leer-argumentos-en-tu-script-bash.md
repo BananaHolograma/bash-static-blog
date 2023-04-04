@@ -1,17 +1,17 @@
 ---
 author: s3r0s4pi3ns
-date: 2023-03-01
-human_date: 03 Marzo, 2023
+date: 2023-03-23
+human_date: 23 Marzo, 2023
 description: Si tenías la curiosidad de como se crean las herramientas de bash que te permiten pasar como parámetro opciones específicas este es tu lugar
-title: Definir argumentos en un script de bash
-path: blog/2023/definir-argumentos-en-un-script-de-bash
+title: Leer argumentos en tu script bash
+path: blog/2023/leer-argumentos-en-tu-script-bash
 ---
 
-**_Los conceptos que aquí expongo los aplico en mi herramienta [linuxladder](https://github.com/s3r0s4pi3ns/linuxladder)_**
+**_Los conceptos que aquí expongo los aplico en mi herramienta [ipharvest](https://github.com/s3r0s4pi3ns/ipharvest/blob/main/ipharvest.sh#L444)_**
 
 Si tienes curiosidad de como se construyen los comandos o tienes intención de crear tu propia herramienta en bash sigue leyendo. Te explicaré de forma sencilla como empezar el esqueleto que recojerá los argumentos del usuario y transformarlo en funcionalidades dentro de tu script.
 
-`Se requiere que tengas conocimientos previos de:`
+**Se requiere que tengas conocimientos previos de:**
 
 - **_Linux_**
 - **_Bash scripting_**
@@ -59,9 +59,9 @@ while getopts ":h:" arg; do
 done
 ```
 
-El comportamiento que he definido de momento para el caso `h | *` es que si se le pasa cualquier otra opción que no este definida en **OPTSTRING** de **geotpts** realize el comportamiento de la opción **h** que sería mostrar ese pequeño mensaje de ayuda en lugar de lanzar un **<option> not supported**.
+El comportamiento que he definido de momento para el caso `h | *` es que si se le pasa cualquier otra opción que no este definida en **OPTSTRING** de **getopts** realize el comportamiento de la opción **h** que sería mostrar ese pequeño mensaje de ayuda en lugar de lanzar un **<option> not supported**.
 
-Se libre de elegir el comportamiento que mejor se adapte a tu herramienta.
+Se libre de elegir el comportamiento que mejor se adapte a tu futura herramienta.
 
 ```bash
 bash script.sh # Nada se muestra de momento
@@ -98,7 +98,6 @@ El concepto es sencillo, usaremos el parámetro especial `$@` que nos permite ob
 
 # Translate wide-format options into short ones
 for arg in "$@"; do
-  shift
 
   case "$arg" in
     '--help')      set -- "$@" '-h'   ;;
@@ -118,14 +117,13 @@ while getopts ":ih:" arg; do
         ;;
     esac
 done
-
-shift $(( OPTIND - 1)) # remove options from positional parameters
 ```
 
 Al ejecutarlo verás que aun no tiene el comportamiento que deseamos, tendrías que ver algo similar a esto:
 
 ```bash
 bash script.sh --index
+
 HELP ME!
 SUPPORTED -i option
 HELP ME!
@@ -136,7 +134,7 @@ SUPPORTED -i option
 
 ```
 
-Esto es porque esta interpretando todo lo que hay del primer **-** en adelante como si fueran distintas opciones y los lee como argumentos separados similar a lo que hace `ls -la` pudiendo interpretar varias opciones en conjunto. De forma visual estaría recibiendo un array así **[- -i n d e x]**. Para solucionar este pequeño inconveniento tiraremos de otro built-in llamado `shift`. Puedes encontrar información mas detallada del funcionamiento de shift en [este enlace](https://www.computerhope.com/unix/bash/shift.htm)
+Esto es porque esta interpretando todo lo que hay del primer **-** en adelante como si fueran distintas opciones y los lee como argumentos separados similar a lo que hace `ls -la` pudiendo interpretar varias opciones en conjunto _(l y a)_. De forma visual estaría recibiendo un array así **[- -i n d e x]**. Para solucionar este pequeño inconveniento tiraremos de otro built-in llamado `shift`. Puedes encontrar información mas detallada del funcionamiento de shift en [este enlace](https://www.computerhope.com/unix/bash/shift.htm)
 
 ```bash
 #!/usr/bin/env bash
@@ -171,7 +169,8 @@ Ahora si tiene el comportamiento que nosotros deseamos:
 
 ```bash
 bash script.sh --index
-# SUPPORTED -i option
+
+SUPPORTED -i option
 
 ```
 
@@ -179,7 +178,7 @@ bash script.sh --index
 
 En principio, el objetivo de este tutorial lo hemos conseguido, que era interpretar las opciones que recibe nuestro script y ejecutar la funcionalidad correspondiente. Es tan simple como reemplazar los **echo** por tus funciones, comandos, otros scripts, etc.
 
-Le podemos dar un toque extra y compilarlo para convertirlo en un ejecutable portable que es lo que haremos con la herramienta `shc`
+Le podemos dar un toque extra y compilarlo para convertirlo en un ejecutable portable que es lo que haremos con la herramienta [shc](https://github.com/neurobin/shc)
 
 ### Importante
 
@@ -205,7 +204,7 @@ Si ya has cambiado el shebang en tu script, shc debería haberte generado 2 arch
 shc -f -script.sh -o script
 ```
 
-Ten en cuenta que tomará la architectura de tu sistema a la hora de compilarlo, en mi MacOs con chip M1 tengo el siguiente resultado, el cual, sería incompatible con otras architecturas como x86_64:
+Ten en cuenta que tomará la architectura de tu sistema a la hora de compilarlo, en mi MacOs con chip M1 tengo el siguiente resultado, el cual, sería incompatible con otras architecturas como amd64:
 
 ```bash
 file script
