@@ -2,6 +2,10 @@
   text-align: center;
 }
 
+.terminal-link {
+  color: #ccc;
+}
+
 .terminal-link:active {
   background-color: #eee;
   color: #222;
@@ -73,6 +77,13 @@ code {
   font-size: 85%;
   margin: 0;
   hyphens: manual;
+  white-space: pre-wrap;
+}
+
+p code {
+  background: black;
+  padding: 0.2rem 0.3rem;
+  border-radius: 5px;
 }
 
 pre {
@@ -91,6 +102,10 @@ pre code {
   overflow: visible;
 }
 
+ul {
+  padding-left: 1rem;
+}
+
 #TOC li {
   list-style: none;
 }
@@ -103,9 +118,7 @@ pre code {
 #TOC a:not(:hover) {
   text-decoration: none;
 }
-code {
-  white-space: pre-wrap;
-}
+
 span.smallcaps {
   font-variant: small-caps;
 }

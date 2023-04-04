@@ -51,12 +51,24 @@ h4 {
 a {
   text-decoration: none;
   background-color: transparent;
-  color: rgb(156 163 175);
+  color: #ffffcc;
 }
 
 ul {
-  list-style: none;
+  list-style: square;
   padding-left: 0;
+}
+
+ul li {
+  padding: 0.5rem 0;
+}
+
+ul.social-icons {
+  list-style: none;
+}
+
+ul.social-icons li {
+  padding: 0;
 }
 
 p {
@@ -93,6 +105,11 @@ kbd {
   margin: 0 0.1em;
   padding: 0.1em 0.6em;
   text-shadow: 0 1px 0 #fff;
+}
+
+blockquote {
+  font-style: italic;
+  font-size: 1.15rem;
 }
 
 @media screen and (max-width: 600px) {

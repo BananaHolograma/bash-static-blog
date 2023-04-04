@@ -28,7 +28,7 @@ function generate_html_from_markdown() {
     local output_path="$base_dir/src/blog/$html_path"
 
     mkdir -p "$(dirname "$output_path")"
-    pandoc --read=markdown --table-of-contents --toc-depth=2 --preserve-tabs --standalone --template="$templates_path"/article.html --listings "$markdown_path" --highlight-style=espresso -o "$output_path"
+    pandoc --read=markdown --table-of-contents --toc-depth=2 --preserve-tabs --standalone --template="$templates_path"/article.html --listings "$markdown_path" --highlight-style=zenburn -o "$output_path"
 
     echo -e "Generated html from article $(dirname "$markdown_path")"
 }

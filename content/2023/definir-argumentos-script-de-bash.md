@@ -4,21 +4,10 @@ date: 2023-03-01
 human_date: 03 Marzo, 2023
 description: Si tenías la curiosidad de como se crean las herramientas de bash que te permiten pasar como parámetro opciones específicas este es tu lugar
 title: Definir argumentos en un script de bash
-path: blog/definir-argumentos-en-un-script-de-bash
+path: blog/2023/definir-argumentos-en-un-script-de-bash
 ---
 
-### Índice
-
-- [getopts vs getopt](#getopts-vs-getopt)
-- [Soporte para opciones con formato doble guion](#soporte-para-opciones-con-formato-doble-guion)
-- [Creando nuestro script basico listo para la batalla](#creando-nuestro-script-basico-listo-para-la-batalla)
-- [Dando soporte al formato largo](#dando-soporte-al-formato-largo)
-- [Compilando nuestro script con shc](#compilando-nuestro-script-con-shc)
-  - [Importante](#importante)
-
----
-
-**_Los conceptos que aquí expongo los aplico en mi herramienta [linuxladder](https://github.com/0xp1n/linuxladder)_**
+**_Los conceptos que aquí expongo los aplico en mi herramienta [linuxladder](https://github.com/s3r0s4pi3ns/linuxladder)_**
 
 Si tienes curiosidad de como se construyen los comandos o tienes intención de crear tu propia herramienta en bash sigue leyendo. Te explicaré de forma sencilla como empezar el esqueleto que recojerá los argumentos del usuario y transformarlo en funcionalidades dentro de tu script.
 
