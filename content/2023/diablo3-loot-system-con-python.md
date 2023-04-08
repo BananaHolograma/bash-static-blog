@@ -264,4 +264,4 @@ Prometo que lo entenderás cuando apliquemos el calculo, aquí te dejo nuestro `
 }
 ```
 
-In crescendo, mientras mas valioso el cofre, mas valioso los items que pueden salir de el, así mantenemos un balance aunque esto como ya veremos en el código final es lo mas díficil del sistema, nunca llueve a gusto de todos.
+In crescendo, mientras mas valioso el cofre, mas valioso los items que pueden salir de el, así mantenemos un balance aunque esto, como ya veremos en el código final, es lo mas díficil del sistema ya nunca llueve a gusto de todos y alcanzar un meta estable es casi imposible.

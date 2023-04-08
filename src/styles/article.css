@@ -80,7 +80,8 @@ code {
   white-space: pre-wrap;
 }
 
-p code {
+p code,
+li code {
   background: black;
   padding: 0.2rem 0.3rem;
   border-radius: 5px;
