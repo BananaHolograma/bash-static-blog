@@ -23,7 +23,8 @@ Hago un enfoque similar para este proyecto de crear el sistema de loot en python
 
 ## El objetivo
 
-Vamos a poner en contexto con las características principales que dispone el sistema de loot enumerando los items y los condicionantes que lo rodean:
+Sin grandes complicaciones, quiero tener la posibilidad de ejecutar **n simulaciones** y me devuelva la información de las cantidades looteadas para ver si los porcentajes de drop se asocian a un buen gameplay donde se premia la constancia.
+Vamos a ponernos en contexto con las características principales que dispone el sistema de loot enumerando los items y los condicionantes que lo rodean:
 
 ### Equipamiento
 
@@ -40,7 +41,7 @@ Tener claro el equipamiento que puede disponer nuestro personaje nos acercará a
 - 1 Hueco para amuleto
 - Arma 2 manos
 - Arma 1 mano
-- Soporte 1 mano, Escudo, orbe, mascara de vodoo... _(si utilizas arma 1 mano puedes utilizar la otra para un item de este tipo)_
+- Soporte 1 mano (Off-hand), Escudo, orbe, mascara de vodoo... _(si utilizas arma 1 mano puedes utilizar la otra para un item de este tipo)_
 
 Esto influye a la hora de seleccionar un rango amplio de objetos a la hora de lootear por lo que da una experiencia mas variada
 
@@ -75,3 +76,192 @@ El equipamiento se lootea con unas estadísticas aleatorios siempre en base a un
 Este apartado se refiere a si se ha abierto un cofre, matado un enemigo, completado un evento. Segun el origen, el proceso de loot recibirá ciertas reglas y calculos especiales para ese loot en especifico. Usaremos claves en el formato `origen:tipo` que seran una via de acceso a nuestro pool y su forma de generarse.
 
 **Ejemplos:** _*chest.normal, greater_rift.killed_guardian, chest.diabolic*_
+
+# Trazando un estado inicial para el proyecto
+
+Como cualquier inicio necesitamos un punto de partida para ir pivotando y desarrollando sobre el para ver hasta donde podemos llegar. Teniendo las reglas basicas anteriores en mente vamos a crear nuestras primeras carpetas y archivos:
+
+```bash
+.
+├── character.py
+├── data
+│   ├── equipment
+│   │   ├── character_set_equipment.json
+│   │   ├── legendary_equipment.json
+│   │   ├── magic_equipment.json
+│   │   ├── normal_equipment.json
+│   │   └── rare_equipment.json
+│   ├── gems
+│   │   └── gems.json
+│   └── loot_table.json
+├── loot.py
+├── requirements.txt
+└── scrapper
+    └── equipment.py
+```
+
+- `character.py` será un modulo con la `clase Character` que representara un personaje de Diablo III y contendrá datos básicos como el nivel y clase.
+- `data` esta dividido en `equipment` donde volcaremos los items que usaremos en el loot segun el tipo de rareza y `gems` donde tendremos los tipos de gemas disponibles en el loot
+- `loot_table.json` es nuestra tabla maestra y definirá el template de cada tipo de origen como pueden ser cofre, enemigo, mapa...
+- `scrapper` Con esta funcionalidad extraremos los items oficiales del juego desde la página oficial, he decidido este camino porque su API oficial es bastante mala de consumir
+
+## Clase Character en character.py
+
+Para modularizar el código vamos a empezar separando esta clase ya que `loot.py` va a crecer como el pene de un adolescente salido estudiando matemáticas a las 17:00 de la tarde:
+
+```python
+from random import randint, choice
+from typing import Annotated
+
+# CHARACTER CLASSES
+BARBARIAN = 'barbarian'
+WIZARD = 'wizard'
+NECROMANCER = 'necromancer'
+WITCH_DOCTOR = 'witch doctor'
+DEMON_HUNTER = 'demon hunter'
+CRUSADER = 'crusader'
+MONK = 'monk'
+
+GAME_CLASSES = [
+    BARBARIAN, WIZARD, NECROMANCER, WITCH_DOCTOR, DEMON_HUNTER, CRUSADER,
+    MONK
+]
+
+class Character:
+    def __init__(self, level: int = None, character_class: str = None) -> None:
+        self.level: int = self._ensure_level_is_on_valid_range(
+            level) if level is not None else randint(1, 70)
+
+        self.character_class: str = self._ensure_character_class_is_implemented(
+            character_class or choice(GAME_CLASSES))
+
+        self.gold: float = 0
+
+    def _ensure_level_is_on_valid_range(self, value: Annotated[int, lambda x: 1 <= x <= 70]) -> int:
+        if (value < 1 or value > 70):
+            raise ValueError(
+                f"The level {value} is not allowed, the system can handle levels between 1 and 70"
+            )
+        return value
+
+    def _ensure_character_class_is_implemented(self, value: str) -> str:
+        if value.lower() not in GAME_CLASSES:
+            raise ValueError(
+                f"The character class {value} is not implemented on diablo 3")
+
+        return value
+```
+
+Una clase sencilla con par de validaciones para nuestros argumentos y nos va de lujo para empezar, de momento crear clases en python me resulta un poco feo con respecto a otros lenguajes como PHP o C#
+
+## Loot table maestra solo con origen cofre
+
+Como no quiero centrarme en los detalles al empezar un proyecto, prefiero tener una base que pueda ser extensible a lo largo del mismo y solo definir de momento, que el origen del loot sea la apertura de un cofre. Como es extensible y todos usarán la misma estructura, añadir una nueva key con otro origen como por ejemplo matar al jefe de una falla es bastante trivial:
+
+La estructura básica que quiero llevar a cabo es la siguiente:
+
+```json
+  "<ORIGEN>": {
+    "<TIPO>": {
+      "rolls": {
+        "min": 1,
+        "max": 3
+      },
+      "entries": [], # Se inicializa vacio ya que nuestro sistema de loot trabaja de forma dinamica con la reglas
+      "rules": {
+        "<type_of_item>": {
+          "amount": 10,
+          "max_total_weight": 60
+        },
+      }
+    }
+  }
+```
+
+A traves de la clave `roll` estamos diciendole cuantas veces generar el loot a la hora de abrir un cofe para añadir las `entries` correspondientes, es decir, de forma aleatoria si salen 2 rolls, se aplicara la generacion de items desde las plantillas de equipamiento 2 veces.
+
+En `rules` esta la clave ya que crearemos una funcion dinámica mas adelante que lea estos valores los cuales usara para obtener los items de una rareza en particular, esto nos prepara el json para que sea extensible y no tengamos que modificar nuestro código base.
+
+El peso es clave, lo explicaré mas adelante pero determina si un item tiene mas prioridad _(peso)_ que otro para salir a la hora de realizar un roll, este `max_total_weight` determina que si la cantidad es 10, la suma de los weight de cada item obtenido no podra superar un total de 60 por lo que habria que generarlo de nuevo hasta que no supere el maximo _(no suele pasar pero por mantener un control)_
+
+Prometo que lo entenderás cuando apliquemos el calculo, aquí te dejo nuestro `loot_table.json` final que define las reglas de apertura de cofres:
+
+```json
+{
+  "CHEST": {
+    "NORMAL": {
+      "rolls": {
+        "min": 1,
+        "max": 3
+      },
+      "entries": [],
+      "rules": {
+        "normal_equipment": {
+          "amount": 10,
+          "max_total_weight": 60
+        },
+        "rare_equipment": {
+          "amount": 5,
+          "max_total_weight": 45
+        }
+      }
+    },
+    "BEAMING": {
+      "rolls": {
+        "min": 3,
+        "max": 6
+      },
+      "entries": [],
+      "rules": {
+        "normal_equipment": {
+          "amount": 3,
+          "max_total_weight": 15
+        },
+        "magic_equipment": {
+          "amount": 15,
+          "max_total_weight": 50
+        },
+        "rare_equipment": {
+          "amount": 5,
+          "max_total_weight": 30
+        },
+        "legendary_equipment": {
+          "amount": 3,
+          "max_total_weight": 15
+        },
+        "character_set_equipment": {
+          "amount": 1,
+          "max_total_weight": 5
+        }
+      }
+    },
+    "DIABOLIC": {
+      "rolls": {
+        "min": 6,
+        "max": 10
+      },
+      "entries": [],
+      "rules": {
+        "magic_equipment": {
+          "amount": 10,
+          "max_total_weight": 30
+        },
+        "rare_equipment": {
+          "amount": 20,
+          "max_total_weight": 75
+        },
+        "legendary_equipment": {
+          "amount": 10,
+          "max_total_weight": 55
+        },
+        "character_set_equipment": {
+          "amount": 5,
+          "max_total_weight": 20
+        }
+      }
+    }
+  }
+}
+```
+
+In crescendo, mientras mas valioso el cofre, mas valioso los items que pueden salir de el, así mantenemos un balance aunque esto como ya veremos en el código final es lo mas díficil del sistema, nunca llueve a gusto de todos.
