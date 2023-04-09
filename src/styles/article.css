@@ -107,6 +107,16 @@ ul {
   padding-left: 1rem;
 }
 
+figure {
+  margin: 0;
+}
+
+figure img {
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
 #TOC li {
   list-style: none;
 }

@@ -24,6 +24,17 @@ path: blog/2023/diablo3-loot-system-con-python
   - [Seleccionando items en base a su peso](#seleccionando-items-en-base-a-su-peso)
     - [Creando la función que aplica el calculo de weight](#creando-la-función-que-aplica-el-calculo-de-weight)
   - [Cálculo del drop para cada item](#cálculo-del-drop-para-cada-item)
+- [Scrapper para generar nuestros archivos .json](#scrapper-para-generar-nuestros-archivos-json)
+  - [Generar archivos .json de equipamiento](#generar-archivos-json-de-equipamiento)
+  - [Precarga de los archivos en loot.py](#precarga-de-los-archivos-en-lootpy)
+- [No nos olvidemos del oro](#no-nos-olvidemos-del-oro)
+- [Gemas everywhere](#gemas-everywhere)
+  - [Aplicando el drop chance para las gemas](#aplicando-el-drop-chance-para-las-gemas)
+- [Tuneando el script para recibir argumentos y lanzar n simulaciones](#tuneando-el-script-para-recibir-argumentos-y-lanzar-n-simulaciones)
+  - [Argparse al rescate](#argparse-al-rescate)
+  - [Mostrando resultados en pantalla a modo resumen](#mostrando-resultados-en-pantalla-a-modo-resumen)
+- [Palabras finales](#palabras-finales)
+- [Fuentes](#fuentes)
 
 # Aprendiendo un nuevo lenguaje
 
@@ -593,6 +604,505 @@ def start_loot(character: Character, origin: str) -> List[Dict]:
     selected_items: List[Dict] = choose_items_with_weight_calculation(selected_pool)
     dropped_items = apply_drop_chance(selected_items, 0.05)
 
-    return [{}]
+    return [{"items": dropped_items}]
 
 ```
+
+# Scrapper para generar nuestros archivos .json
+
+Para una simulación mas realista he decidido pillarme los items de armadura solamente, el procedimiento para las armas es el mismo pero no necesito tantos detalles en este pequeño script.
+
+## Generar archivos .json de equipamiento
+
+Como este artículo se expandiría infinito explicando el scrapping, te dejo aquí el código y puedas generar los archivos .json actualizados en lugar de cogerlos del repositorio:
+
+```python
+import requests
+import requests_cache
+import re
+from shutil import rmtree
+from random import uniform
+from json import dump, load, JSONDecodeError
+from os import makedirs, path
+from bs4 import BeautifulSoup
+from bs4.element import Tag
+
+base_url: str = "https://us.diablo3.blizzard.com/en-us"
+
+requests_cache.install_cache(
+    backend='filesystem', serializer='json', cache_name='scrapper-cache', expire_after=3600)
+
+CURRENT_DIR = path.dirname(path.abspath(__file__))
+DATA_DIRECTORY = path.join(CURRENT_DIR, '..', 'data', 'equipment')
+
+
+def extract_items_information(base_url: str, category: str):
+    item_page = base_url + f"/item/{category}/"
+
+    try:
+        response = requests.get(item_page)
+        response.raise_for_status()
+
+        scrapper = BeautifulSoup(response.text, "html.parser")
+
+        items = scrapper.find_all(lambda tag: tag.name == 'tr' and ('row1' in tag.get('class', []) or 'row2' in tag.get(
+            'class', [])))
+
+        result = {}
+
+        for item in items:
+            name: str = extract_item_name(item)
+            rarity: str = extract_item_rarity(item)
+            armor_range: dict = extract_item_armor_range(item, category)
+
+            item_build = {"quantity": 1,
+                          "name": name,
+                          "type": f"armor:{category}",
+                          "rarity": rarity,
+                          "stats_value_range": armor_range,
+                          "weight": generate_weight_based_on_rarity(rarity),
+                          "drop": generate_drop_chance_based_on_rarity(rarity)
+                          }
+
+            if rarity in result:
+                result[rarity].append(item_build)
+            else:
+                result[rarity] = [item_build]
+
+        for rarity in result.keys():
+            equipment_filename = f"{rarity}_equipment.json"
+
+            if path.exists(f"{DATA_DIRECTORY}/{equipment_filename}"):
+                with open(f"{DATA_DIRECTORY}/{equipment_filename}", 'r+') as existing_equipment_file:
+                    try:
+                        actual_content = load(existing_equipment_file)
+                    except JSONDecodeError:
+                        actual_content = []
+
+                    # Mover el puntero al principio del archivo
+                    existing_equipment_file.seek(0)
+                    # Borrar todo el contenido existente del archivo
+                    existing_equipment_file.truncate()
+
+                    dump(actual_content +
+                         result[rarity], existing_equipment_file)
+            else:
+                with open(f"{DATA_DIRECTORY}/{equipment_filename}", 'w') as equipment_file:
+                    dump(result[rarity], equipment_file)
+
+    except requests.exceptions.HTTPError as error:
+        print(f"Error HTTP: {error}")
+        exit()
+
+
+def extract_item_name(item: Tag) -> str:
+    return item.find("h3", class_="subheader-3").find('a').text
+
+
+def extract_item_rarity(item: Tag) -> str:
+    colors = {
+        'd3-color-orange': 'legendary',
+        'd3-color-yellow': 'rare',
+        'd3-color-blue': 'magic',
+        'd3-color-white': 'normal',
+        'd3-color-green': 'character_set'
+    }
+
+    for color, rarity in colors.items():
+        if item.find('a', {'class': color}):
+            return rarity
+
+    return 'unknown'
+
+
+def extract_item_armor_range(item: Tag, category: str) -> dict:
+    if category not in ['amulet', 'ring']:
+        armor_range = item.find(
+            'ul', {"class": 'item-armor-armor'}).find('span', {"class": 'value'}).text
+        match = re.search(r'(\d+)\s*-\s*(\d+)', armor_range.strip())
+
+        if match:
+            return {'min': int(match.group(1)), 'max': int(match.group(2))}
+
+    return {"min": 0, "max": 0}
+
+
+def generate_weight_based_on_rarity(rarity: str) -> float:
+    weight_table = {
+        "normal": {"min": 1, "max": 7},
+        "magic": {"min": 1, "max": 5},
+        "rare": {"min": 1, "max": 3},
+        "legendary": {"min": 1, "max": 3},
+        "character_set": {"min": 1, "max": 2.5},
+    }
+
+    if rarity in weight_table.keys():
+        return round(uniform(weight_table[rarity]["min"], weight_table[rarity]["max"]), 2)
+
+    return 0.0
+
+
+def generate_drop_chance_based_on_rarity(rarity: str) -> dict:
+    drop_chance_table = {
+        "normal": {"min": 0.45, "max": 0.7, "max_allowed_percentage": 0.20},
+        "magic": {"min": 0.35, "max": 0.45, "max_allowed_percentage": 0.15},
+        "rare": {"min": 0.25, "max": 0.3, "max_allowed_percentage": 0.10},
+        "legendary": {"min": 0.01, "max": 0.09, "max_allowed_percentage": 0.05},
+        "character_set":  {"min": 0.01, "max": 0.09, "max_allowed_percentage": 0.05},
+    }
+
+    if rarity in drop_chance_table.keys():
+        base_chance = uniform(
+            drop_chance_table[rarity]["min"], drop_chance_table[rarity]["max"])
+
+        return {"chance": base_chance, "max_chance": base_chance + (base_chance * drop_chance_table[rarity]['max_allowed_percentage'])}
+
+    return {"chance": 0, "max_chance": 0}
+
+
+def extract_equipment_information():
+
+    if path.exists(DATA_DIRECTORY):
+        rmtree(DATA_DIRECTORY)
+
+    makedirs(DATA_DIRECTORY, exist_ok=True)
+
+    for equipment in ['helm', 'pauldrons', 'chest-armor', 'bracers', 'gloves', 'belt', 'pants', 'boots', 'amulet', 'ring']:
+        print(f"Extracting data for {equipment}...")
+        extract_items_information(base_url, equipment)
+
+
+extract_equipment_information()
+
+```
+
+## Precarga de los archivos en loot.py
+
+Si recuerdas el principio del script `loot.py` teniamos puesto a mano el diccionario de `GAME_ITEMS`, vamos añadir un par de lineas para precargar los json generados con el scrapper.
+
+Con la palabra `with` aseguramos que el fichero se cierra correctamente, `with` se utiliza para trabajar con recursos que deben ser liberados después de su uso, como archivos o conexiones de red:
+
+```python
+GAME_ITEMS: dict = {}
+
+with open('data/equipment/legendary_equipment.json', 'r') as legendary_equipment:
+    GAME_ITEMS['LEGENDARY_EQUIPMENT'] = json.load(legendary_equipment)
+
+with open('data/equipment/rare_equipment.json', 'r') as rare_equipment:
+    GAME_ITEMS['RARE_EQUIPMENT'] = json.load(rare_equipment)
+
+with open('data/equipment/magic_equipment.json', 'r') as magic_equipment:
+    GAME_ITEMS['MAGIC_EQUIPMENT'] = json.load(magic_equipment)
+
+with open('data/equipment/normal_equipment.json', 'r') as normal_equipment:
+    GAME_ITEMS['NORMAL_EQUIPMENT'] = json.load(normal_equipment)
+
+with open('data/equipment/character_set_equipment.json', 'r') as character_set_equipment:
+    GAME_ITEMS['CHARACTER_SET_EQUIPMENT'] = json.load(character_set_equipment)
+```
+
+# No nos olvidemos del oro
+
+Ahora que tenemos la base de nuestra generación de loot podemos ir añadiendole mas cosas como es el oro, si has jugado diablo a veces aparece oro por no decir casi siempre, así que vamos a implementar una funcionalidad sencilla para generar pequeñas cantidades en cada iteración:
+
+```python
+def start_loot(character: Character, origin: str) -> List[Dict]:
+    selected_pool: dict = build_pool(character, origin)
+
+    selected_items = choose_items_with_weight_calculation(selected_pool)
+    dropped_items = apply_drop_chance(selected_items, 0.05)
+    gold = randrange(10000) + 1
+
+    return [{"items": dropped_items, "gold": gold}]
+```
+
+# Gemas everywhere
+
+Aparte de equipamiento y oro a veces aparecen gemas, pero estas tienen condiciones especiales segun el nivel del personaje y la dificultad en la que juegue y no salen todos los tipos como pueden ser Real y Real sin defectos que es el máximo rango que puede alcanzar.
+
+Mi enfoque inicial es como no, crear un archivo `gems.json` que me sirva de plantilla en la generación:
+
+```json
+{
+  "NORMAL": {
+    "TYPES": ["AMETHYST", "DIAMOND", "EMERALD", "RUBY", "TOPAZ"],
+    "CATEGORY": {
+      "FLAWLESS": {
+        "drop": { "min_level": 1, "chance": 0.25, "max_chance": 0.3 }
+      },
+      "SQUARE": {
+        "drop": { "min_level": 1, "chance": 0.23, "max_chance": 0.27 }
+      },
+      "FLAWLESS SQUARE": {
+        "drop": { "min_level": 1, "chance": 0.21, "max_chance": 0.24 }
+      },
+      "STAR": { "drop": { "min_level": 1, "chance": 0.2, "max_chance": 0.22 } },
+      "MARQUISE": {
+        "drop": { "min_level": 61, "chance": 0.13, "max_chance": 0.16 }
+      },
+      "IMPERIAL": {
+        "drop": { "min_level": 61, "chance": 0.15, "max_chance": 0.18 }
+      },
+      "FLAWLESS IMPERIAL": {
+        "drop": { "min_level": 61, "chance": 0.08, "max_chance": 0.1 }
+      },
+      "ROYAL": {
+        "drop": { "min_level": 100, "chance": 0.02, "max_chance": 0.03 }
+      },
+      "FLAWLESS ROYAL": {
+        "drop": { "min_level": 100, "chance": 0.01, "max_chance": 0.02 }
+      }
+    }
+  },
+  "LEGENDARY": None
+}
+```
+
+Para evitar que salgan `ROYAL` y `FLAWLESS ROYAL` he puesto un nivel que el sistema no permite y me evito complicaciones innecesarias. Las legendarias necesitaran de otras reglas como haber terminado una falla superior con ciertas condiciones, para no complicarme ya que quiero hacer otras cosas con mi vida las he dejado a None y que las implemente otro insensato.
+
+## Aplicando el drop chance para las gemas
+
+Al ser un número muy reducido con unas características específicas podemos aplicar el drop directamente a la hora de lootearlas.
+
+Creemos una variable global al principio de nuestro script que referencie nuestro archivo `gems.json`:
+
+```python
+with open('data/gems/gems.json', 'r') as gems:
+    GAME_ITEMS['GEMS'] = json.load(gems)
+
+```
+
+Y aplicamos una lógica muy parecida a las anteriores con la posibilidad de aplicar modificares al porcentaje de drop, cada vez que la miro veo que se puede mejorar pero me da una pereza de cojones:
+
+```python
+def loot_gems(character: Character, modifier: Annotated[float, lambda x: 0.0 <= x <= 1.0] = None) -> List[Dict]:
+    available_gems = GAME_ITEMS['GEMS'].copy()
+    looted_gems = []
+
+    max_quantity = 3
+
+    if character.level >= 61:
+        max_quantity = 6
+
+    enabled_categories = [category for category in available_gems['NORMAL']['CATEGORY'].keys(
+    ) if character.level >= available_gems['NORMAL']['CATEGORY'][category]['drop']['min_level']]
+
+    for _ in range(randrange(max_quantity) + 1):
+        selected_category = choice(enabled_categories)
+        gem_type = available_gems['NORMAL']["CATEGORY"][selected_category]
+        drop_chance = gem_type['drop']['chance']
+        max_chance = gem_type['drop']['max_chance']
+
+        if modifier is not None:
+            new_chance = drop_chance + modifier
+            drop_chance = new_chance if new_chance < max_chance else max_chance
+
+        if random() <= drop_chance:
+            looted_gems.append({
+                "type": choice(GAME_ITEMS['GEMS']["NORMAL"]["TYPES"]),
+                "category": selected_category,
+                "quantity": 1
+            })
+
+    return looted_gems
+```
+
+Por lo que nuestra función `start_loot` tiene su versión final que es:
+
+```python
+def start_loot(character: Character, origin: str) -> List[Dict]:
+    selected_pool: dict = build_pool(character, origin)
+
+    selected_items = choose_items_with_weight_calculation(selected_pool)
+    dropped_items = apply_drop_chance(selected_items, 0.05)
+    gold = randrange(10000) + 1
+    gems = loot_gems(character)
+
+    return {"items": dropped_items, "gold": gold, "gems": gems}
+```
+
+# Tuneando el script para recibir argumentos y lanzar n simulaciones
+
+Ahora mismo tenemos una versión funcional pero necesitamos un display de datos para tomar decisiones en nuestro juego y ver si por ejemplo en 1000 simulaciones abriendo distintos cofres cuantos legendarios aparecen. Si vemos que salen mas que objetos normales el sistema de loot es una puta mierda y hay que modificarlo para alcanzar ese equilibrio imposible.
+
+## Argparse al rescate
+
+Después de haber creado herramientas con bash donde necesitaba leer argumentos del usuario, el modus operando de python es infinitamente mas comodo y encima existen librerias que lo hacen mas profesional y bonito.
+
+Para simplificar la tarea he decidido usar `argparse` que incluye la libreria estandar de python
+
+```python
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='''
+Simulate multiple loots for a Diablo 3 character
+EXAMPLES:
+    python loot.py --level 61 -c monk
+    python loot.py -l 50 --character_class "witch doctor"  # Wrap around quotes to allow whitespaces
+    python loot.py --level 2 -c wizard --num-simulations 10000
+    python loot.py --level 70 -c barbarian --num-simulations 500 --output "dist/result.json"
+''', formatter_class=argparse.RawDescriptionHelpFormatter, epilog='Enjoy the loot!')
+
+    parser.add_argument('-c', '--character_class', type=str, choices=GAME_CLASSES,
+                        help=f"The character class you want to use in the loot process")
+    parser.add_argument('-l', '--level', type=int, choices=range(
+        1, 71), help='The started level for the character (between 1 and 70)', metavar="61")
+    parser.add_argument('-s', '--num-simulations', type=int, default=1,
+                        help='The numbers of simulations to be performed', metavar="100")
+    parser.add_argument('-o', '--output', type=str, default=None,
+                        help="Select a filepath to output the results in .json format")
+    parser.add_argument('--enabled-origins')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s 1.0')
+    args = parser.parse_args()
+
+    if not (args.character_class and args.level) or args.num_simulations < 1:
+        parser.print_help()
+
+    character = Character(args.level, args.character_class)
+
+    simulation_result = simulate_loot(character, args.num_simulations)
+    show_simulation_result(character, simulation_result)
+
+    if args.output:
+        with open(args.output, 'w') as results_file:
+            json.dump(simulation_result, results_file)
+```
+
+## Mostrando resultados en pantalla a modo resumen
+
+En el bloque de código anterior existe una función llamada `show_simulation_result` que no hemos implementado aun pero lo único que hace es recibir el loot generado total y mostrar un resumen en pantalla.
+
+Antes establece los códigos de escape ANSI que representan colores de forma global en el script:
+
+```python
+# ANSI ESCAPE CODE COLOURS
+green = '\033[32m'
+orange = '\033[38;5;208m'
+blue = '\033[34m'
+red = '\033[31m'
+yellow = '\033[33m'
+purple = '\033[1;35m'
+cyan = '\033[1;36m'
+gray = '\033[1;37m'
+
+reset = '\033[0m'
+```
+
+Y creamos la lógica de display para ver que está generando a vista de pájaro nuestras simulaciones de loot:
+
+```python
+def show_simulation_result(character: Character, result: Dict):
+    gem_colors = {
+        "AMETHYST": purple,
+        "DIAMOND": cyan,
+        "EMERALD": green,
+        "RUBY": red,
+        "TOPAZ": yellow
+    }
+
+    equipment_rarity_colors = {
+        "legendary": orange,
+        "character_set": green,
+        "magic": blue,
+        "rare": yellow,
+        "normal": gray
+    }
+
+    for gem in sorted(result['gems'], key=lambda x: x['type'], reverse=False):
+        print(
+            f"A total of {gem['quantity']} {gem_colors[gem['type']]}{gem['type']} - {gem['category']}{reset} have come out")
+
+    print(f"\nThe global statistical data for the amount of gold generated in each simulation:", end="\n")
+    print(
+        f"Total gold looted: {yellow}{format(character.gold, ',d')}{reset}", end="\n")
+
+    print("...", end="\n")
+    print("Mean: ", statistics.mean(result['gold']), end="\n")
+    print("Median: ", statistics.median(result['gold']), end="\n")
+    print("Mode: ", statistics.mode(result['gold']), end="\n")
+    print("Variance: ", statistics.variance(result['gold']), end="\n")
+    print("Standard deviation: ", statistics.stdev(result['gold']), end="\n")
+    print("...", end="\n")
+
+    equipment_keys = GAME_ITEMS.keys()
+
+    for key in result.keys():
+        if f"{key}_equipment".upper() in equipment_keys:
+            print(
+                f"A total of {len(result[key])} {equipment_rarity_colors[key]}{key}{reset} items has been looted", end="\n")
+```
+
+He ejecutado el comando con los siguientes argumentos `python loot.py -l 65 -c "witch doctor" -s 1000` y he obtenido el siguiente output:
+
+![loot.py](/assets/tty.gif)
+
+```bash
+
+[ INIT ] Starting the loot process with a total of 1000 simulations
+
+[ CHARACTER ] Selected character class WITCH DOCTOR with level 65
+
+A total of 13 AMETHYST - STAR have come out
+A total of 5 AMETHYST - FLAWLESS IMPERIAL have come out
+A total of 9 AMETHYST - IMPERIAL have come out
+A total of 23 AMETHYST - SQUARE have come out
+A total of 30 AMETHYST - FLAWLESS have come out
+A total of 14 AMETHYST - FLAWLESS SQUARE have come out
+A total of 9 AMETHYST - MARQUISE have come out
+A total of 17 DIAMOND - FLAWLESS SQUARE have come out
+A total of 18 DIAMOND - IMPERIAL have come out
+A total of 12 DIAMOND - FLAWLESS IMPERIAL have come out
+A total of 21 DIAMOND - FLAWLESS have come out
+A total of 18 DIAMOND - SQUARE have come out
+A total of 27 DIAMOND - STAR have come out
+A total of 9 DIAMOND - MARQUISE have come out
+A total of 18 EMERALD - SQUARE have come out
+A total of 21 EMERALD - FLAWLESS SQUARE have come out
+A total of 15 EMERALD - IMPERIAL have come out
+A total of 28 EMERALD - FLAWLESS have come out
+A total of 12 EMERALD - MARQUISE have come out
+A total of 14 EMERALD - STAR have come out
+A total of 7 EMERALD - FLAWLESS IMPERIAL have come out
+A total of 30 RUBY - FLAWLESS have come out
+A total of 9 RUBY - IMPERIAL have come out
+A total of 20 RUBY - MARQUISE have come out
+A total of 16 RUBY - STAR have come out
+A total of 6 RUBY - FLAWLESS IMPERIAL have come out
+A total of 19 RUBY - FLAWLESS SQUARE have come out
+A total of 19 RUBY - SQUARE have come out
+A total of 16 TOPAZ - FLAWLESS SQUARE have come out
+A total of 25 TOPAZ - SQUARE have come out
+A total of 25 TOPAZ - FLAWLESS have come out
+A total of 18 TOPAZ - IMPERIAL have come out
+A total of 15 TOPAZ - STAR have come out
+A total of 12 TOPAZ - MARQUISE have come out
+A total of 5 TOPAZ - FLAWLESS IMPERIAL have come out
+
+The global statistical data for the amount of gold generated in each simulation:
+Total gold looted: 5,072,281
+...
+Mean:  5072.281
+Median:  5160.5
+Mode:  6301
+Variance:  8303389.565604605
+Standard deviation:  2881.5602658290186
+...
+A total of 471 rare items has been looted
+A total of 688 normal items has been looted
+A total of 930 magic items has been looted
+A total of 38 legendary items has been looted
+A total of 10 character_set items has been looted
+
+```
+
+# Palabras finales
+
+Bueno, en nuestro primer try tenemos un bajo drop rate de legendarios y piezas de conjunto, ya que 1000 cofres de distintos tipos son muchos cofres.
+Ahora es cuestión de calibrar la balanza simulando loots con el sistema que hemos creado, es una versión muy rudimentaria y basuresca por lo que te animo a mejorarla o crear la tuya propia.
+
+Me ha parecido un proyecto bastante interesante porque toca mucho manejo de diccionarios, loops y tratamiento de archivos con el extra de aventurarme en el mundo del scrapping lo que me ha permitido sentirme cómodo con python en una semana
+
+# Fuentes
+
+- [Introduction to loot tables](https://learn.microsoft.com/en-us/minecraft/creator/documents/introductiontoloottables)
+- [Real python](https://realpython.com)
