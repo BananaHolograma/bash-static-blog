@@ -136,7 +136,7 @@ Como cualquier inicio necesitamos un punto de partida para ir pivotando y desarr
 - `character.py` será un modulo con la `clase Character` que representara un personaje de Diablo III y contendrá datos básicos como el nivel y clase.
 - `data` esta dividido en `equipment` donde volcaremos los items que usaremos en el loot segun el tipo de rareza y `gems` donde tendremos los tipos de gemas disponibles en el loot
 - `loot_table.json` es nuestra tabla maestra y definirá el template de cada tipo de origen como pueden ser cofre, enemigo, mapa...
-- `scrapper` Con esta funcionalidad extraremos los items oficiales del juego desde la página oficial, he decidido este camino porque su API oficial es bastante mala de consumir
+- `scrapper` Con esta funcionalidad extraeremos los items oficiales del juego desde la [página oficial de blizzard](https://us.diablo3.blizzard.com/en-us), he decidido este camino porque su API oficial es bastante mala a la hora de consumirla.
 
 ## Clase Character en character.py
 
@@ -189,7 +189,7 @@ Una clase sencilla con par de validaciones para nuestros argumentos y nos va de 
 
 ## Loot table maestra solo con origen cofre
 
-Como no quiero centrarme en los detalles al empezar un proyecto, prefiero tener una base que pueda ser extensible a lo largo del mismo y solo definir de momento, que el origen del loot sea la apertura de un cofre. Como es extensible y todos usarán la misma estructura, añadir una nueva key con otro origen como por ejemplo matar al jefe de una falla es bastante trivial:
+Como no quiero centrarme en los detalles al empezar un proyecto, prefiero tener una base que pueda ser extensible a lo largo del mismo y solo definir en principio, que el origen del loot sea la apertura de un cofre. Como es extensible y todos usarán la misma estructura, añadir una nueva key con otro origen como por ejemplo matar al jefe de una falla es bastante trivial:
 
 La estructura básica que quiero llevar a cabo es la siguiente:
 
@@ -444,15 +444,24 @@ with open('data/loot_table.json', 'r') as loot_table:
     AVAILABLE_POOLS = json.load(loot_table)
 
 GAME_ITEMS: dict = {
-  "LEGENDARY_EQUIPMENT": [
-     {
+   "NORMAL_EQUIPMENT": [
+       {
         "quantity": 1,
-        "name": "Boots of Disregard",
-        "type": "armor:boots",
-        "rarity": "legendary",
-        "stats_value_range": { "min": 30, "max": 34 },
-        "weight": 1.34,
-        "drop": { "chance": 0.06373878661948736, "max_chance": 0.06692572595046173 }
+        "name": "Star Helm",
+        "type": "armor:helm",
+        "rarity": "normal",
+        "stats_value_range": { "min": 21, "max": 24 },
+        "weight": 4.05,
+        "drop": { "chance": 0.46881700267124105, "max_chance": 0.5625804032054893 }
+      },
+      {
+        "quantity": 1,
+        "name": "Leather Hood",
+        "type": "armor:helm",
+        "rarity": "normal",
+        "stats_value_range": { "min": 21, "max": 24 },
+        "weight": 6.44,
+        "drop": { "chance": 0.5196764901634326, "max_chance": 0.6236117881961192 }
       },
   ],
 
@@ -497,7 +506,7 @@ def load_item_entries_based_on_pool_rules(selected_pool: dict) -> List[Dict]:
 
 Una vez hemos obtenido una cantidad aleatorio del inventario global para el pool debemos aplicar el calculo del peso para ver que items de esa lista se extraen para su posterior calculo del drop.
 
-Te preguntarás porque no extraemos directamente los items con el calculo del weight, te explico el calculo:
+Te preguntarás porque no extraemos directamente los items con el calculo del weight y nos evitamos ese shuffle inicial, te explico la causa en los siguientes bloques de código mostrando el cálculo del weight:
 
 ```python
 total_weight = sum([entry['weight'] for entry in pool['entries']])
@@ -511,7 +520,7 @@ if random() <= probability:
 
 ```
 
-Si la lista de items normales es grande, pongamos que obtenemos un total_weight de 500, para un item individual la probabilidad se reduciria muchisimo y no saldría casí nunca incluso tratándose de un objeto normal en el juego con un drop alto:
+Si la lista de items normales fuera grande, pongamos que obtenemos un total_weight de 500, para un item individual la probabilidad se reduciria muchisimo y no saldría casí nunca incluso tratándose de un objeto normal con un drop alto en el juego:
 
 ```python
 probability = 2.54 / 500
@@ -519,7 +528,7 @@ probability = 2.54 / 500
 0.00508
 ```
 
-Si en cambio lo aplicamos con los items extraidos aleatoriamente de nuestra funcion llamada previamente `load_item_entries_based_on_pool_rules` en la que para un pool de `chest.normal` extraemos 10 items de rareza normal donde el total_weight resultante es 25 tendriamos un 18% de probabilidades de que aparezca para un item individual con peso 4.5:
+Si en cambio lo aplicamos con los items extraidos aleatoriamente de nuestra funcion llamada `load_item_entries_based_on_pool_rules` en la que para un pool de `chest.normal` extraemos 10 items de rareza normal donde el total_weight resultante es 25 tendriamos un 18% de probabilidades de que aparezca para un item individual con peso 4.5:
 
 ```python
 probability = 4.5 / 25
@@ -565,7 +574,7 @@ def start_loot(character: Character, origin: str) -> List[Dict]:
 ## Cálculo del drop para cada item
 
 Esta funcionalidad se puede complicar todo lo que quieras, yo he decidido implementar la posibilidad de aplicar modificadores al porcentaje los cuales pueden venir de cualquier tipo de movida en el juego, ya sea por modificadores globales del sistema, equipamiento del personaje, etc.
-Nosotros no queremos tener en cuenta el detalle de su origen, solo su aplicación en el cálculo actual
+Nosotros no queremos tener en cuenta el detalle de su origen, solo su aplicación en el cálculo actual.
 
 Para tener un control y mantener un 'equilibrio' en el sistema de loot, hemos definido un máximo para cada item que no puede sobrepasarse por muchos buff que tenga el personaje.
 
@@ -596,7 +605,7 @@ def apply_drop_chance(items: List[Dict], modifier: Annotated[float, lambda x: 0.
 
 Los porcentajes en este script se manejan entre los valores 0 y 1 donde 0.05 -> 5% y 1 -> 100%. Esto lo hago porque las funciones random de python funcionan con rangos decimales entre 0 y 1 por lo que la implementación se hace mas natural.
 
-Así va cogiendo forma `start_loot`, por cuestiones logísticas estoy pasando hard codeado el valor del modificador que podría ser None o venir de otra fuente externa:
+Por cuestiones logísticas estoy pasando hard codeado el valor del modificador que podría ser None o venir de otra fuente externa, veamos como es el estado actual de nuestra función principal `start_loot`:
 
 ```python
 def start_loot(character: Character, origin: str) -> List[Dict]:
@@ -610,7 +619,7 @@ def start_loot(character: Character, origin: str) -> List[Dict]:
 
 # Scrapper para generar nuestros archivos .json
 
-Para una simulación mas realista he decidido pillarme los items de armadura solamente, el procedimiento para las armas es el mismo pero no necesito tantos detalles en este pequeño script.
+Para una simulación mas realista he decidido pillarme los items de armadura solamente, el procedimiento para las armas es el mismo pero no necesito tantos detalles para la versión inicial de este script.
 
 ## Generar archivos .json de equipamiento
 
