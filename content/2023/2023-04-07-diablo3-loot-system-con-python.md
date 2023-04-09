@@ -7,6 +7,20 @@ title: Diablo 3 loot system con python
 path: blog/2023/diablo3-loot-system-con-python
 ---
 
+- [El aprendizaje no-lineal](#el-aprendizaje-no-lineal)
+  - [Enumerando las reglas para alcanzar nuestro objetivo](#enumerando-las-reglas-para-alcanzar-nuestro-objetivo)
+    - [Equipamiento](#equipamiento)
+    - [Rareza del objeto](#rareza-del-objeto)
+    - [Exclusividad de equipo](#exclusividad-de-equipo)
+    - [Nivel y dificultad](#nivel-y-dificultad)
+    - [Rango de estadisticas](#rango-de-estadisticas)
+    - [Origen del loot](#origen-del-loot)
+- [Trazando un estado inicial para el proyecto](#trazando-un-estado-inicial-para-el-proyecto)
+  - [Clase Character en character.py](#clase-character-en-characterpy)
+  - [Loot table maestra solo con origen cofre](#loot-table-maestra-solo-con-origen-cofre)
+- [Sentando las bases en loot.py](#sentando-las-bases-en-lootpy)
+  - [Cargando items en las claves 'entries'](#cargando-items-en-las-claves-entries)
+
 La metodología que uso para aprender un nuevo lenguaje es hacer cosas con el, suena simple pero no lo es del todo. Este metodo no va a funcionar con aquellas personas que esten empezando en el mundo de la programación sino para aquell@s que ya saben programar y quieren pivotar a otro lenguaje, probar otros paradigmas, etc.
 
 Podría embaucarme en el eterno viaje de tutoriales en video, articulos de blog, documentación y un largo coñazo mas pero prefiero tener una idea en mente y proyectarla con el nuevo lenguaje e ir aprendiendo la sintaxis y conceptos sobre la marcha, tan rudimentario como efectivo.
@@ -15,13 +29,13 @@ Después de llevar largas horas farmeando en diablo para hacerme las builds de l
 
 Algo muy distinto al tipico TODO list que ya aburre infinito.
 
-## El aprendizaje no-lineal
+# El aprendizaje no-lineal
 
 A mi personalmente no me funciona el aprendizaje lineal en el que te lees los capitulos por orden númerico ascendente, prefiero hacer una pequeña mezcla de teoria-práctica en espacios cortos de tiempo mientras voy hilvanando los conceptos para conseguir un mapa mental adecuado, por ejemplo, leo el concepto de diccionario en python y al momento me pongo a teclear para crear memoria muscular e interiorizar esa teoría creando e interaccionando con un diccionario.
 
 Hago un enfoque similar para este proyecto de crear el sistema de loot en python, voy desglosando las funcionalidades que quiero ir aplicando antes de escribir código, un poco de música y a enfrentarme con lo desconocido.
 
-## El objetivo
+## Enumerando las reglas para alcanzar nuestro objetivo
 
 Sin grandes complicaciones, quiero tener la posibilidad de ejecutar **n simulaciones** y me devuelva la información de las cantidades looteadas para ver si los porcentajes de drop se asocian a un buen gameplay donde se premia la constancia.
 Vamos a ponernos en contexto con las características principales que dispone el sistema de loot enumerando los items y los condicionantes que lo rodean:
@@ -45,7 +59,7 @@ Tener claro el equipamiento que puede disponer nuestro personaje nos acercará a
 
 Esto influye a la hora de seleccionar un rango amplio de objetos a la hora de lootear por lo que da una experiencia mas variada
 
-## Rareza del objeto
+### Rareza del objeto
 
 La rareza del objeto se divide en:
 Normal, Magico, Raro, Legendario, Legendario ancestral, Legendario ancestral primigenio, Conjunto _(ancestral, primigenio)_
@@ -56,22 +70,22 @@ Normal, Magico, Raro, Legendario, Legendario ancestral, Legendario ancestral pri
 - Los objetos de tipo ancestral o primigenio solo se podran acceder si se jugan fallas de nivel superior +70 en dificultades superiores a tormento I
 - Si en el loot aparece un legendario/conjunto, hay una posibilidad 1 entre x _(habra que definir x)_ de que este sea ancestral o primigenio los cuales pueden ofrecer estadisticas mas altas.
 
-## Exclusividad de equipo
+### Exclusividad de equipo
 
 Hay equipo global que puede usar cualquier personaje pero su generación será diferente, si el atributo principal es inteligencia, estos objetos vendran con propiedades mágicas acorde a este atributo o habilidades que solo la clase puede utilizar.
 
 Las piezas de conjunto se desbloquean en base a la clase del personaje que estamos utilizando, si usamos un mago solo lootearemos sets equipamiento para esta clase en particular.
 **_Se que hay veces que una pieza de conjunto de otra clase se lootea pero por simplificar la lógica no voy a implementar esta característica en el sistema de loot_**
 
-## Nivel y dificultad
+### Nivel y dificultad
 
 El nivel y la dificultad en la que se está jugando influye en los porcentajes de loot para los objetos legendarios y de conjunto.
 
-## Rango de estadisticas
+### Rango de estadisticas
 
 El equipamiento se lootea con unas estadísticas aleatorios siempre en base a unas reglas básicas que ese objeto puede admitir y pueden ser por ejemplo, entre 700 y 1000 de daño, 4 propiedades magicas aleatorias, inteligencia del personaje \* 0.4 + (400 ~700) y un largo etc.
 
-## Origen del loot
+### Origen del loot
 
 Este apartado se refiere a si se ha abierto un cofre, matado un enemigo, completado un evento. Segun el origen, el proceso de loot recibirá ciertas reglas y calculos especiales para ese loot en especifico. Usaremos claves en el formato `origen:tipo` que seran una via de acceso a nuestro pool y su forma de generarse.
 
@@ -187,6 +201,7 @@ El peso es clave, lo explicaré mas adelante pero determina si un item tiene mas
 Prometo que lo entenderás cuando apliquemos el calculo, aquí te dejo nuestro `loot_table.json` final que define las reglas de apertura de cofres:
 
 ```json
+// loot_table.json
 {
   "CHEST": {
     "NORMAL": {
@@ -265,3 +280,184 @@ Prometo que lo entenderás cuando apliquemos el calculo, aquí te dejo nuestro `
 ```
 
 In crescendo, mientras mas valioso el cofre, mas valioso los items que pueden salir de el, así mantenemos un balance aunque esto, como ya veremos en el código final, es lo mas díficil del sistema ya nunca llueve a gusto de todos y alcanzar un meta estable es casi imposible.
+
+# Sentando las bases en loot.py
+
+Vamos a empezar definiendo bases sencillas en el core de nuestro sistema, vamos a precargar nuestra tabla maestra para usarla a través de nuestras funciones.
+
+_Siempre tengo en cuenta que el fichero `loot.py` va a estar en la raiz del proyecto a la hora de definir los paths cuando se trata de manejar archivos_
+
+```python
+from json import load
+
+with open('data/loot_table.json', 'r') as loot_table:
+    AVAILABLE_POOLS = json.load(loot_table)
+
+def start_loot(character: Character, origin: str) -> List[Dict]:
+    selected_pool: dict = build_pool(character, origin)
+
+    return [{}]
+
+
+def build_pool(character: Character, origin: str) -> dict:
+    pool_template: dict = AVAILABLE_POOLS.copy()
+    translated_origin: list[str] = origin.upper().split('.')
+
+    for key in translated_origin:
+        if key in pool_template:
+            pool_template = pool_template[key]
+        else:
+            raise KeyError(
+                f"The access key {key} does not exists in the available pools for the value {origin}")
+
+    return pool_template
+
+```
+
+De momento tenemos precargado nuestra tabla maestra en la variable `AVAILABLE_POOLS` y 2 funciones principales que se encargan de obtener el pool adecuado segun el origen que queremos simular y el personaje.
+
+A menos que explicitamente quiera mutar el pool, vamos a manejar una copia para no alterar el original. Como la variable origin que recibiremos vendra en el formato `chest.normal` o `chest.diabolic` tenemos que aplicar una transformación para convertirlo en una lista tipo `['CHEST', 'NORMAL']` lo que nos permitira acceder al pool de una forma dinámica.
+
+```python
+    pool_template: dict = AVAILABLE_POOLS.copy()
+    translated_origin: list[str] = origin.upper().split('.')
+```
+
+Gracias a esto, podemos usar el siguiente bucle for para seleccionar el pool:
+
+```python
+    for key in translated_origin:
+        if key in pool_template:
+            pool_template = pool_template[key]
+        else:
+            raise KeyError(
+                f"The access key {key} does not exists in the available pools for the value {origin}")
+
+    return pool_template
+```
+
+Para un valor de `chest.normal` deberia devolvernos el diccionario:
+
+```json
+{
+      "rolls": {
+        "min": 1,
+        "max": 3
+      },
+      "entries": [],
+      "rules": {
+        "normal_equipment": {
+          "amount": 10,
+          "max_total_weight": 60
+        },
+        "rare_equipment": {
+          "amount": 5,
+          "max_total_weight": 45
+        }
+      }
+    },
+```
+
+## Cargando items en las claves 'entries'
+
+El código anterior nos proporciona el template para el origen seleccionado pero no tenemos cargada ninguna entry donde se alojaran los items que se pueden lootear, vamos a crear una nueva función para que cargue las entries según las reglas definidas en el pool:
+
+```python
+# Antes vamos a definir el diccionario GAME_ITEMS
+GAME_ITEMS: dict = {
+  "LEGENDARY_EQUIPMENT": [
+     {
+        "quantity": 1,
+        "name": "Boots of Disregard",
+        "type": "armor:boots",
+        "rarity": "legendary",
+        "stats_value_range": { "min": 30, "max": 34 },
+        "weight": 1.34,
+        "drop": { "chance": 0.06373878661948736, "max_chance": 0.06692572595046173 }
+      },
+  ],
+
+  "RARE_EQUIPMENT": ...
+}
+```
+
+La estructura que he decidido para los items del juego es esta, ya empezamos a ver porcentajes de drop y el famoso valor weight que define el peso que tendra este item en la lista completa. Estos valores los genero en `scrapper.py` pero de momento no te preocupes y definamos el diccionario manualmente para una vez confirmada nuestra lógica podamos usar archivos .json que nos ayudaran a este propósito.
+
+La siguiente función es la que utilizara este diccionario `GAME_ITEMS` y nos ayudará a cargar usando las claves de `rules` en el pool que hemos obtenido anteriormente y que casualmente son la rareza del equipamiento.
+
+He decidido cargarlas directamente en el pool en lugar de devolver la lista y asignarla despues para evitarme acciones adicionales ademas de que el pool que estamos pasando como parámetro es una copia del original:
+
+```python
+def load_item_entries_based_on_pool_rules(selected_pool: dict) -> List[Dict]:
+    key: str
+    for key in selected_pool['rules'].keys():
+        equipment_rarity = key.strip().upper()
+
+        if equipment_rarity in GAME_ITEMS:
+            items = GAME_ITEMS[equipment_rarity].copy()
+            amount_rule = selected_pool['rules'][key]['amount']
+            shuffle(items)
+
+            selected_pool['entries'] += items[:amount_rule]
+
+    return selected_pool
+```
+
+Esto es el archivo `loot.py` que hemos conseguido desarrollar hasta ahora:
+
+```python
+# loot.py
+from json import load
+
+with open('data/loot_table.json', 'r') as loot_table:
+    AVAILABLE_POOLS = json.load(loot_table)
+
+GAME_ITEMS: dict = {
+  "LEGENDARY_EQUIPMENT": [
+     {
+        "quantity": 1,
+        "name": "Boots of Disregard",
+        "type": "armor:boots",
+        "rarity": "legendary",
+        "stats_value_range": { "min": 30, "max": 34 },
+        "weight": 1.34,
+        "drop": { "chance": 0.06373878661948736, "max_chance": 0.06692572595046173 }
+      },
+  ],
+
+  "RARE_EQUIPMENT": []
+}
+
+def start_loot(character: Character, origin: str) -> List[Dict]:
+    selected_pool: dict = build_pool(character, origin)
+
+    return [{}]
+
+def build_pool(character: Character, origin: str) -> dict:
+    pool_template: dict = AVAILABLE_POOLS.copy()
+    translated_origin: list[str] = origin.upper().split('.')
+
+    for key in translated_origin:
+        if key in pool_template:
+            pool_template = pool_template[key]
+        else:
+            raise KeyError(
+                f"The access key {key} does not exists in the available pools for the value {origin}")
+
+    return load_item_entries_based_on_pool_rules(pool_template)
+
+def load_item_entries_based_on_pool_rules(selected_pool: dict) -> List[Dict]:
+    key: str
+    for key in selected_pool['rules'].keys():
+        equipment_rarity = key.strip().upper()
+
+        if equipment_rarity in GAME_ITEMS:
+            items = GAME_ITEMS[equipment_rarity].copy()
+            amount_rule = selected_pool['rules'][key]['amount']
+            shuffle(items)
+
+            selected_pool['entries'] += items[:amount_rule]
+
+    return selected_pool
+
+```
