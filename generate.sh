@@ -17,14 +17,14 @@ if is_macOs; then
 fi
 
 CURRENT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
-MARKDOWN_FILES=$(find "$CURRENT_DIR/content" -type f -iname '*.md' -print | xargs -0 | xargs ls -tr)
+MARKDOWN_FILES=$(find "$CURRENT_DIR/content" -type f -iname '*.md' -print | xargs -0 | sort -r)
 
 function generate_html_from_markdown() {
     local markdown_path=$1
     local base_dir=$(echo "$markdown_path" | sed 's|/content/.*||')
     local templates_path="$base_dir/content/templates"
 
-    local html_path=$(echo "$markdown_path" | sed 's|.*/content/||' | sed 's/\.md$/.html/')
+    local html_path=$(echo "$markdown_path" | sed 's|.*/content/||' | sed 's/\.md$/.html/' | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}-//g')
     local output_path="$base_dir/src/blog/$html_path"
 
     mkdir -p "$(dirname "$output_path")"
@@ -53,7 +53,7 @@ function generate_blog_index() {
             date=$(extract_frontmatter_property "$file" "date")
             human_date=$(extract_frontmatter_property "$file" "human_date")
             year=$(echo "$date" | $GREP_COMMAND -o '[0-9]\{4\}')
-            path=$(echo "/blog/$year/$(basename "$file")" | sed 's/\.md$//')
+            path=$(echo "/blog/$year/$(basename "$file" | sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2}-//g')" | sed 's/\.md$//')
 
             html+="<li><a href=\"$path\">$title</a><span class=\"date\">$human_date</span></li>"
         fi 
