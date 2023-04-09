@@ -7,6 +7,29 @@ title: Construyendo un blog estatico con bash
 path: blog/2023/construyendo-un-blog-estatico-con-bash
 ---
 
+- [Antes de empezar](#antes-de-empezar)
+- [La idea inicial](#la-idea-inicial)
+- [Iniciando el camino](#iniciando-el-camino)
+  - [README.md](#readmemd)
+    - [¿Se puede crear un sitio tipo blog usando la herramienta pandoc y un par de comandos de bash?](#se-puede-crear-un-sitio-tipo-blog-usando-la-herramienta-pandoc-y-un-par-de-comandos-de-bash)
+  - [Que he terminado de ese README inicial](#que-he-terminado-de-ese-readme-inicial)
+- [El script](#el-script)
+  - [Generando html desde markdown con pandoc](#generando-html-desde-markdown-con-pandoc)
+  - [Iteración de archivos markdown para generar el html](#iteración-de-archivos-markdown-para-generar-el-html)
+  - [Construyendo el índice de artículos cada vez que lanzamos el script](#construyendo-el-índice-de-artículos-cada-vez-que-lanzamos-el-script)
+    - [Extrayendo el frontmatter y generando un índice de artículos aceptable](#extrayendo-el-frontmatter-y-generando-un-índice-de-artículos-aceptable)
+- [Resultado final del script](#resultado-final-del-script)
+  - [Como está el directorio de trabajo después de todo este proceso](#como-está-el-directorio-de-trabajo-después-de-todo-este-proceso)
+- [Toque gourmet con Docker y Nginx](#toque-gourmet-con-docker-y-nginx)
+  - [Definiendo nuestra configuración de Nginx](#definiendo-nuestra-configuración-de-nginx)
+    - [Dockerfile](#dockerfile)
+    - [default.conf](#defaultconf)
+    - [nginx.conf](#nginxconf)
+    - [docker-compose.yml](#docker-composeyml)
+  - [Construyendo y levantando nuestro contenedor de nginx](#construyendo-y-levantando-nuestro-contenedor-de-nginx)
+- [Imagen docker de pandoc](#imagen-docker-de-pandoc)
+- [Conclusiones finales](#conclusiones-finales)
+
 # Antes de empezar
 
 Si te importa un carajo como he construido esta basura puedes ir directamente al código en el repositorio [https://github.com/s3r0s4pi3ns/bash-static-blog](https://github.com/s3r0s4pi3ns/bash-static-blog) y ahorrarte toda esta fumada.

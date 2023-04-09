@@ -1034,7 +1034,7 @@ def show_simulation_result(character: Character, result: Dict):
 
 He ejecutado el comando con los siguientes argumentos `python loot.py -l 65 -c "witch doctor" -s 1000` y he obtenido el siguiente output:
 
-![loot.py](/assets/tty.gif)
+![loot.py](/assets/images/loot.gif)
 
 ```bash
 

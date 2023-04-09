@@ -7,6 +7,13 @@ title: Leer argumentos en tu script bash
 path: blog/2023/leer-argumentos-en-tu-script-bash
 ---
 
+- [getopts vs getopt](#getopts-vs-getopt)
+- [Soporte para opciones con formato doble guion](#soporte-para-opciones-con-formato-doble-guion)
+- [Creando nuestro script basico listo para la batalla](#creando-nuestro-script-basico-listo-para-la-batalla)
+- [Dando soporte al formato largo](#dando-soporte-al-formato-largo)
+- [Compilando nuestro script con shc](#compilando-nuestro-script-con-shc)
+  - [Importante](#importante)
+
 **_Los conceptos que aquí expongo los aplico en mi herramienta [ipharvest](https://github.com/s3r0s4pi3ns/ipharvest/blob/main/ipharvest.sh#L444)_**
 
 Si tienes curiosidad de como se construyen los comandos o tienes intención de crear tu propia herramienta en bash sigue leyendo. Te explicaré de forma sencilla como empezar el esqueleto que recojerá los argumentos del usuario y transformarlo en funcionalidades dentro de tu script.
