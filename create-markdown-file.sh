@@ -16,6 +16,24 @@ is_valid_date() {
     [[ $date_value =~ ^([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$ ]]
 }
 
+create_markdown_file() {
+    local markdown=$1
+    touch "$markdown"
+
+    cat << EOF > "$markdown"
+---
+author: $AUTHOR
+date: $DATE
+human_date: $(date -j -f "%Y-%m-%d" "$DATE" +"%d %B, %Y")
+description: $DESCRIPTION
+title: $TITLE
+path: blog/$(date -u +%Y)/$FILENAME
+---
+EOF
+
+printf "Created markdown file in %s" "$FINAL_PATH"
+}
+
 while [ -z "$AUTHOR" ];  do
     read -rp "Choose the author name for your new markdown file (default $(id -un || whoami)): " AUTHOR
 
@@ -45,18 +63,17 @@ while ! is_valid_date "$DATE" ; do
 done        
 
 FINAL_PATH="$OUTPUT_PATH/$DATE-$FILENAME.md"
+OVERWRITE=''
 
-touch "$FINAL_PATH"
+if [[ -f $FINAL_PATH ]]; then 
+    
+    while [[ "$OVERWRITE" != "y" && "$OVERWRITE" != "n" ]]; do
+        read -rp "Ya existe un archivo con este nombre ¿desea sobreescribirlo? (y)es / (n)o: " OVERWRITE
+    done
 
-cat << EOF > "$FINAL_PATH"
----
-author: $AUTHOR
-date: $DATE
-human_date: $(date -j -f "%Y-%m-%d" "$DATE" +"%d %B, %Y")
-description: $DESCRIPTION
-title: $TITLE
-path: blog/$(date -u +%Y)/$FILENAME
----
-EOF
- 
-echo -e "Created markdown file in $FINAL_PATH"
+    if [[ $OVERWRITE = 'y' ]]; then 
+        create_markdown_file "$FINAL_PATH"
+    fi
+else 
+    create_markdown_file "$FINAL_PATH"
+fi
