@@ -23,29 +23,29 @@ main {
   padding-right: 2rem;
   padding-top: 4rem;
 }
-
+/* Estilos para los encabezados h1 a h5 */
 h1 {
   font-size: 2.5em;
   line-height: calc(1ex / 0.42);
-  margin: calc(1ex / 0.42) 0;
+  margin: calc(1ex / 0.62) 0;
 }
 
 h2 {
   font-size: 2em;
   line-height: calc(1ex / 0.42);
-  margin: calc(1ex / 0.42) 0;
+  margin: calc(1ex / 0.62) 0;
 }
 
 h3 {
-  font-size: 1.75em;
+  font-size: 1.5em;
   line-height: calc(1ex / 0.38);
-  margin: calc(1ex / 0.38) 0;
+  margin: calc(1ex / 0.58) 0;
 }
 
 h4 {
-  font-size: 1.5em;
+  font-size: 1.25em;
   line-height: calc(1ex / 0.37);
-  margin: calc(1ex / 0.37) 0;
+  margin: calc(1ex / 0.57) 0;
 }
 
 a {
@@ -116,6 +116,28 @@ blockquote {
   html,
   body {
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  h1 {
+    font-size: 2em;
+  }
+
+  h2 {
+    font-size: 1.75em;
+  }
+
+  h3 {
+    font-size: 1.5em;
+  }
+
+  h4 {
+    font-size: 1.25em;
+  }
+
+  h5 {
+    font-size: 1em;
   }
 }
 
