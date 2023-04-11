@@ -31,6 +31,7 @@ path: blog/2023/funcionalidades-comunes-para-el-dia-a-dia-con-bash
 - [Convertir string multilinea en array](#convertir-string-multilinea-en-array)
 - [Imprimir texto multilinea con sustitucion de variables](#imprimir-texto-multilinea-con-sustitucion-de-variables)
 - [Extraer propiedades de un archivo .json](#extraer-propiedades-de-un-archivo-json)
+- [Extraer propiedades de un frontmatter en archivos markdown](#extraer-propiedades-de-un-frontmatter-en-archivos-markdown)
 - [Reemplazar espacios en blanco por un caracter definido](#reemplazar-espacios-en-blanco-por-un-caracter-definido)
 - [Sacando output a shell en lugar de guardar un archivo con wget](#sacando-output-a-shell-en-lugar-de-guardar-un-archivo-con-wget)
 - [Convertir texto a hexadecimal](#convertir-texto-a-hexadecimal)
@@ -507,13 +508,46 @@ extract_json_property() {
 extract json_property "$json" "latitude"
 ```
 
+# Extraer propiedades de un frontmatter en archivos markdown
+
+Para generar los articulos de este blog utilizo esta función que me permite extraer propiedades y aplicar unas transformaciones despues o simplemente leer el dato, muy útil si trabajas con markdown:
+
+```bash
+### Estructura de frontmatter en un markdown para alojar metadatos
+# ---
+# author: s3r0s4pi3ns
+# date: 2023-03-01
+# datetime: 2023-03-01T00:00:00.000Z
+# description: Si tenías la curiosidad de como se crean las herramientas de bash que te permiten pasar como parámetro opciones específicas este es tu # lugar
+# title: Definir argumentos en un script de bash
+# ---
+###
+
+function extract_frontmatter_property() {
+    local markdown_file=$1
+    local property=$2
+
+    if [ -f "$markdown_file" ]; then
+        frontmatter=$(awk '/^---*$/{p=!p;next}p' "$markdown_file")
+        echo "$frontmatter" | $GREP_COMMAND -E "^${property}: (.*)" | sed 's/^[^:]*:\s*//'
+    else
+        echo ''
+    fi
+}
+
+# Ejemplos
+title=$(extract_frontmatter_property "$file" "title")
+date=$(extract_frontmatter_property "$file" "date")
+human_date=$(extract_frontmatter_property "$file" "human_date")
+```
+
 # Reemplazar espacios en blanco por un caracter definido
 
 ```bash
 # Se reemplazaran por _
 sed 's/[[:space:]]\{1,\}/_/g'
 
-# Eliminar comillas dobles "
+# Bonus: Eliminar comillas dobles "
 sed 's/\"//g'
 ```
 
