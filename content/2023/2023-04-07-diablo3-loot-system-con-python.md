@@ -5,6 +5,7 @@ human_date: 07 Abril, 2023
 description: Implementamos una loot table y hacemos una aproximación a traves de código de como se podría construir el sistema que utiliza diablo 3 a la hora de lootear equipamiento y objetos.
 title: Diablo 3 loot system con python
 path: blog/2023/diablo3-loot-system-con-python
+thumbnail: /assets/images/stable_difussion_diablo3_logo.jpg
 ---
 
 - [Aprendiendo un nuevo lenguaje](#aprendiendo-un-nuevo-lenguaje)

@@ -5,6 +5,7 @@ human_date: 23 Marzo, 2023
 description: Si tenías la curiosidad de como se crean las herramientas de bash que te permiten pasar como parámetro opciones específicas este es tu lugar
 title: Leer argumentos en tu script bash
 path: blog/2023/leer-argumentos-en-tu-script-bash
+thumbnail: /assets/images/stable_diffusion_man_reading.jpg
 ---
 
 - [getopts vs getopt](#getopts-vs-getopt)

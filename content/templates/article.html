@@ -20,6 +20,9 @@
       <article>
         <header>
           <h1>$title$</h1>
+          $if(thumbnail)$
+          <img src="$thumbnail$" alt="article_thumbnail" />
+          $endif$
         </header>
       </article>
       <section>$body$</section>

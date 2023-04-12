@@ -65,6 +65,10 @@
   }
 }
 
+header > h1 {
+  text-align: center;
+}
+
 blockquote {
   margin: 1em 0 1em 1.7em;
   padding-left: 1em;
@@ -107,13 +111,17 @@ ul {
   padding-left: 1rem;
 }
 
+img {
+  max-width: 100%;
+  display: block;
+  margin: 0.5em auto;
+}
+
 figure {
   margin: 0;
 }
 
 figure img {
-  max-width: 100%;
-  display: block;
   margin: 0 auto;
 }
 

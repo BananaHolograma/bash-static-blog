@@ -5,6 +5,7 @@ human_date: 04 Abril, 2023
 description: Tu blog estatico con solo 80 lineas de bash, aprende a no depender de ningun CMS a la hora de crear tu contenido
 title: Construyendo un blog estatico con bash
 path: blog/2023/construyendo-un-blog-estatico-con-bash
+thumbnail: /assets/images/stable_difussion_abandoned_library.jpg
 ---
 
 - [Antes de empezar](#antes-de-empezar)
