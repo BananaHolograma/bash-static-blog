@@ -17,6 +17,7 @@ thumbnail: /assets/images/stable_difussion_city.jpg
 - [Reemplazar un bloque especifico de texto en un archivo](#reemplazar-un-bloque-especifico-de-texto-en-un-archivo)
 - [Añadir nueva linea despues de un match con sed](#añadir-nueva-linea-despues-de-un-match-con-sed)
 - [Convertir una cadena de texto en array](#convertir-una-cadena-de-texto-en-array)
+- [Separar valores en nueva linea por multiples delimitadores](#separar-valores-en-nueva-linea-por-multiples-delimitadores)
 - [Leer un archivo linea por linea](#leer-un-archivo-linea-por-linea)
 - [Comprobar si un usuario existe en el sistema](#comprobar-si-un-usuario-existe-en-el-sistema)
 - [Leer input del usuario](#leer-input-del-usuario)
@@ -187,6 +188,20 @@ if ! is_empty "$ALLOWED_USERS"; then
 	       # do your stuff here
       done
 fi
+```
+
+# Separar valores en nueva linea por multiples delimitadores
+
+```bash
+DOMAINS=$(echo "example.com,example.es|hola.org:adios.es 10000.net" | tr ',|-_/: ' '\n')
+
+echo $DOMAINS
+
+example.com
+example.es
+hola.org
+adios.es
+10000.net
 ```
 
 # Leer un archivo linea por linea
