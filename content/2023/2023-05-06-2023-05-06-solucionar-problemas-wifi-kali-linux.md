@@ -90,13 +90,13 @@ tar -xvzf linux-firmware-20230404.tar.gz
 cp linux-firmware-20230404/iwlwifi-*.{ucode,pnvm} /lib/firmware/
 
 # Nos aseguramos que tienen el propietario y grupo correcto para los nuevos archivos
-sudo chown -R /lib/firmware
+sudo chown -R root:root /lib/firmware
 ```
 
 ## Problemas de incompatibilidad segun version del kernel
 
-En algunos casos que lei parece que ciertas personas descubrieron que su problema era debido a la version del kernel y tuvieron que hacer un downgrade, en principio no es el caso para las versiones 6+ ya que todo esto les sucedia en el rango de la version 5, en mi caso aprticular, el procedimiento lo realice con una version de kernel `6.1.0-kali7-amd64` y no tuve que aplicar ese downgrade pero no esta de mas echarle un vistazo si todo lo demas no ha funcionado.
+En algunos casos que lei parece que ciertas personas descubrieron que su problema era debido a la version del kernel y tuvieron que hacer un downgrade, en principio no es el caso para las versiones 6+ ya que todo esto les sucedia en el rango de la version 5, en mi caso particular, el procedimiento lo realice con una version de kernel `6.1.0-kali7-amd64` y no tuve que aplicar ese downgrade pero no esta de mas echarle un vistazo si todo lo demas no ha funcionado.
 
-# Despedida
+# Despedida 👋
 
 Si alguno de los pasos anteriores te ha funcionado, me alegro, solo te deseo que no te hayas pegado toda una tarde y lo solucionaras relativamente rapido para seguir trasteando con linux, saludos terricola.
